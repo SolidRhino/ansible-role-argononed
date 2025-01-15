@@ -21,7 +21,7 @@
     regexp: "^dtparam=i2c_arm="
     state: present
   become: true
-  notify: reboot system
+  notify: Reboot system
 
 - name: Set facts for package managers
   ansible.builtin.set_fact:
