@@ -16,7 +16,7 @@
 
 - name: Check if i2c is enabled
   ansible.builtin.lineinfile:
-    path: /boot/config.txt
+    path: /boot/firmware/config.txt
     line: "dtparam=i2c_arm=on"
     regexp: "^dtparam=i2c_arm="
     state: present
@@ -30,32 +30,59 @@
     use_dnf: "{{ ansible_pkg_mgr == 'dnf' }}"
     use_zypper: "{{ ansible_pkg_mgr == 'zypper' }}"
 
-- name: Install git for Debian-based systems
+# Install dependencies for Debian-based systems
+- name: Install build dependencies for Debian-based systems
   ansible.builtin.apt:
-    name: git
+    name:
+      - git
+      - build-essential
+      - cmake
+      - i2c-tools
+      - libi2c-dev
     state: present
     update_cache: true
   become: true
   when: use_apt | bool
 
-- name: Install git for Arch-based systems
+# Install dependencies for Arch-based systems
+- name: Install build dependencies for Arch-based systems
   community.general.pacman:
-    name: git
+    name:
+      - git
+      - base-devel
+      - cmake
+      - i2c-tools
     state: present
     update_cache: true
   become: true
   when: use_pacman | bool
 
-- name: Install git for RedHat-based systems
+# Install dependencies for RedHat-based systems
+- name: Install build dependencies for RedHat-based systems
   ansible.builtin.dnf:
-    name: git
+    name:
+      - git
+      - gcc
+      - gcc-c++
+      - make
+      - cmake
+      - i2c-tools
+      - i2c-tools-devel
     state: present
   become: true
   when: use_dnf | bool
 
-- name: Install git for OpenSUSE
+# Install dependencies for OpenSUSE
+- name: Install build dependencies for OpenSUSE
   community.general.zypper:
-    name: git
+    name:
+      - git
+      - gcc
+      - gcc-c++
+      - make
+      - cmake
+      - i2c-tools
+      - i2c-tools-devel
     state: present
   become: true
   when: use_zypper | bool
@@ -64,18 +91,19 @@
   ansible.builtin.git:
     repo: "{{ argononed_repo }}"
     dest: "/tmp/argononed"
-    version: "{{ argononed_version }}"
+    single_branch: true
+    version: master
   become: true
 
 - name: Make install script executable
   ansible.builtin.file:
-    path: /tmp/argononed/install.sh
+    path: /tmp/argononed/install
     mode: '0755'
   become: true
 
 - name: Run install script
   ansible.builtin.command:
-    cmd: ./install.sh
+    cmd: ./install
     chdir: /tmp/argononed
   args:
     creates: /usr/bin/argononed
