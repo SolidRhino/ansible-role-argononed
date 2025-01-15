@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Your Name
+  author: SolidRhino
   description: Role to install and configure argononed for Raspberry Pi hardware
   license: MIT
   min_ansible_version: 2.9

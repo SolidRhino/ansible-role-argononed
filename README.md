@@ -68,7 +68,7 @@ ansible-galaxy role install <your-role-name>
 You can also include this role as a Git submodule in your Ansible project:
 
 ```bash
-git submodule add <repository-url> roles/ansible-role-argononed
+git submodule add https://github.com/SolidRhino/ansible-role-argononed.git roles/ansible-role-argononed
 git submodule update --init --recursive
 ```
 
