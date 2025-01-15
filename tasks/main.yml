@@ -1,0 +1,88 @@
+---
+- name: Read Raspberry Pi model from device tree
+  ansible.builtin.slurp:
+    src: /proc/device-tree/model
+  register: device_model
+  ignore_errors: true
+
+- name: Set Raspberry Pi detection fact
+  ansible.builtin.set_fact:
+    is_raspberry_pi: "{{ device_model.content is defined and
+                        device_model.content | b64decode is search('Raspberry Pi') }}"
+
+- name: Skip role if not running on Raspberry Pi
+  ansible.builtin.meta: end_play
+  when: not is_raspberry_pi
+
+- name: Check if i2c is enabled
+  ansible.builtin.lineinfile:
+    path: /boot/config.txt
+    line: "dtparam=i2c_arm=on"
+    regexp: "^dtparam=i2c_arm="
+    state: present
+  become: true
+  notify: reboot system
+
+- name: Set facts for package managers
+  ansible.builtin.set_fact:
+    use_apt: "{{ ansible_pkg_mgr == 'apt' }}"
+    use_pacman: "{{ ansible_pkg_mgr == 'pacman' }}"
+    use_dnf: "{{ ansible_pkg_mgr == 'dnf' }}"
+    use_zypper: "{{ ansible_pkg_mgr == 'zypper' }}"
+
+- name: Install git for Debian-based systems
+  ansible.builtin.apt:
+    name: git
+    state: present
+    update_cache: true
+  become: true
+  when: use_apt | bool
+
+- name: Install git for Arch-based systems
+  community.general.pacman:
+    name: git
+    state: present
+    update_cache: true
+  become: true
+  when: use_pacman | bool
+
+- name: Install git for RedHat-based systems
+  ansible.builtin.dnf:
+    name: git
+    state: present
+  become: true
+  when: use_dnf | bool
+
+- name: Install git for OpenSUSE
+  community.general.zypper:
+    name: git
+    state: present
+  become: true
+  when: use_zypper | bool
+
+- name: Clone argononed repository
+  ansible.builtin.git:
+    repo: "{{ argononed_repo }}"
+    dest: "/tmp/argononed"
+    version: "{{ argononed_version }}"
+  become: true
+
+- name: Make install script executable
+  ansible.builtin.file:
+    path: /tmp/argononed/install.sh
+    mode: '0755'
+  become: true
+
+- name: Run install script
+  ansible.builtin.command:
+    cmd: ./install.sh
+    chdir: /tmp/argononed
+  args:
+    creates: /usr/bin/argononed
+  become: true
+
+- name: Clean up build directory
+  ansible.builtin.file:
+    path: "/tmp/argononed"
+    state: absent
+  become: true
