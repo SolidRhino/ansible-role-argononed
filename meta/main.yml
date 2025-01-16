@@ -3,7 +3,7 @@ galaxy_info:
   author: SolidRhino
   description: Role to install and configure argononed for Raspberry Pi hardware
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
   platforms:
     - name: Debian
       versions:
